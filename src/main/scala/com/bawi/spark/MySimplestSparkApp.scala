@@ -12,7 +12,7 @@ object MySimplestSparkApp {
     if (isLocal) sparkConf.setMaster("local[*]")
 
 //    sparkConf.set("spark.metrics.conf.*.sink.console.class", "org.apache.spark.metrics.sink.ConsoleSink")
-    sparkConf.set("spark.metrics.conf.*.sink.myconsole.class", "org.apache.spark.metrics.sink.MyConsoleSink")
+//    sparkConf.set("spark.metrics.conf.*.sink.myconsole.class", "org.apache.spark.metrics.sink.MyConsoleSink")
 
     val spark = SparkSession.builder().config(sparkConf).getOrCreate()
 
