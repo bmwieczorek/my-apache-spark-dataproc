@@ -19,11 +19,14 @@ package com.bawi.spark.metrics.sink
 
 import com.codahale.metrics.{MetricRegistry, MyConsoleReporter}
 
+import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import java.util.{Locale, Properties}
 
 abstract class MyAbstractConsoleSink(property: Properties, registry: MetricRegistry) {
   System.out.println("Created MyAbstractConsoleSink with " + property)
+  private val hostName = InetAddress.getLocalHost.getHostName
+  System.out.println("Created MyAbstractConsoleSink on " + hostName)
 
   val CONSOLE_DEFAULT_PERIOD = 10
   val CONSOLE_DEFAULT_UNIT = "SECONDS"

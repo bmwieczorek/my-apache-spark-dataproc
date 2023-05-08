@@ -8,7 +8,6 @@ import java.util.Properties
 
 class MyConsoleSink(property: Properties, registry: MetricRegistry)
   extends MyAbstractConsoleSink(property, registry) with Sink {
-    System.out.println("Using Constructor required by MetricsSystem::registerSinks() for spark >= 3.2")
 
   def this(property: Properties, registry: MetricRegistry, securityMgr: SecurityManager) = {
     this(property, registry)
