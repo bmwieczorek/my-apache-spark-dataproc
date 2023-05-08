@@ -31,10 +31,10 @@ mvn clean package -Pdist -Dspark.version=3.1.3 -Djava.version=1.8
 gcloud dataproc jobs submit spark --cluster=bartek-spark-3-1-3-on-dataproc --region=us-central1 \
 --class=com.bawi.spark.MySimplestSparkApp \
 --jars=target/my-apache-spark-dataproc-0.1-SNAPSHOT.jar \
---properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
+--properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
 --labels=job_name=bartek-mysimplestsparkapp
 
---properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
+--properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
 
 # when replace above ConsoleSink with below MyConsoleSink
 
@@ -81,11 +81,11 @@ mvn clean package -Pdist -Dspark.version=3.3.0 -Djava.version=11
 gcloud dataproc jobs submit spark --cluster=bartek-spark-3-3-0-on-dataproc --region=us-central1 \
 --class=com.bawi.spark.MySimplestSparkApp \
 --jars=target/my-apache-spark-dataproc-0.1-SNAPSHOT.jar \
---properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
+--properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
 --labels=job_name=bartek-mysimplestsparkapp
 
 # when replace above ConsoleSink with below MyConsoleSink
---properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
+--properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
 
 # I get error below and spark job never finishes
 Created MyConsoleSink with {class=org.apache.spark.metrics.sink.MyConsoleSink}
