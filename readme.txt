@@ -31,16 +31,16 @@ mvn clean package -Pdist -Dspark.version=3.1.3 -Djava.version=1.8
 gcloud dataproc jobs submit spark --cluster=bartek-spark-3-1-3-on-dataproc --region=us-central1 \
 --class=com.bawi.spark.MySimplestSparkApp \
 --jars=target/my-apache-spark-dataproc-0.1-SNAPSHOT.jar \
---properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
+--properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
 --labels=job_name=bartek-mysimplestsparkapp
 
+--properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
 
 # when replace above ConsoleSink with below MyConsoleSink
---properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
 
 # I get error below and spark job never finishes
-Created MyAbstractConsoleSink with {class=org.apache.spark.metrics.sink.MyConsoleSink}
-Created MyAbstractConsoleSink on bartek-spark-3-1-3-on-dataproc-m
+Created MyConsoleSink with {class=org.apache.spark.metrics.sink.MyConsoleSink}
+Created MyConsoleSink on bartek-spark-3-1-3-on-dataproc-m
 Using Legacy Constructor required by MetricsSystem::registerSinks() for spark < 3.2
 [2023-05-08 10:35:08.367]Container exited with a non-zero exit code 1. Error file: prelaunch.err.
   23/05/08 10:35:08 ERROR org.apache.spark.metrics.MetricsSystem: Sink class org.apache.spark.metrics.sink.MyConsoleSink cannot be instantiated
@@ -81,15 +81,15 @@ mvn clean package -Pdist -Dspark.version=3.3.0 -Djava.version=11
 gcloud dataproc jobs submit spark --cluster=bartek-spark-3-3-0-on-dataproc --region=us-central1 \
 --class=com.bawi.spark.MySimplestSparkApp \
 --jars=target/my-apache-spark-dataproc-0.1-SNAPSHOT.jar \
---properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
+--properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
 --labels=job_name=bartek-mysimplestsparkapp
 
 # when replace above ConsoleSink with below MyConsoleSink
---properties=spark.metrics.conf.*.sink.myconsole.class=org.apache.spark.metrics.sink.MyConsoleSink \
+--properties=spark.metrics.conf.*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink \
 
 # I get error below and spark job never finishes
-Created MyAbstractConsoleSink with {class=org.apache.spark.metrics.sink.MyConsoleSink}
-Created MyAbstractConsoleSink on bartek-spark-3-3-0-on-dataproc-m
+Created MyConsoleSink with {class=org.apache.spark.metrics.sink.MyConsoleSink}
+Created MyConsoleSink on bartek-spark-3-3-0-on-dataproc-m
 [2023-05-08 10:35:14.924]Container exited with a non-zero exit code 1. Error file: prelaunch.err.
 23/05/08 10:35:14 ERROR MetricsSystem: Sink class org.apache.spark.metrics.sink.MyConsoleSink cannot be instantiated
 Caused by: java.lang.ClassNotFoundException: org.apache.spark.metrics.sink.MyConsoleSink
