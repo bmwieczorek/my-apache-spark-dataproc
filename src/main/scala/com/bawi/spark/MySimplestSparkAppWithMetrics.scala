@@ -11,12 +11,16 @@ object MySimplestSparkAppWithMetrics {
   private val LOGGER: Logger = LoggerFactory.getLogger(getClass.getName)
 
   def main(args: Array[String]): Unit = {
-    val appName = getSimpleName(MySimplestSparkAppWithMetrics.getClass)
+    val appName = MySimplestSparkAppWithMetrics.getClass.getSimpleName.split('$')(0)
 
     val sparkConf = new SparkConf()
       .setAppName(appName)
       .set("spark.plugins", classOf[CustomMetricSparkPlugin].getName)
       .set("spark.metrics.namespace", appName)
+//      .set("spark.metrics.conf.master.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+//      .set("spark.metrics.conf.worker.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+//      .set("spark.metrics.conf.driver.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
+//      .set("spark.metrics.conf.executor.source.jvm.class", "org.apache.spark.metrics.source.JvmSource")
 
     if (isLocal) {
       sparkConf.setMaster("local[*]")
@@ -41,16 +45,6 @@ object MySimplestSparkAppWithMetrics {
   private def isLocal: Boolean = {
     val osName = System.getProperty("os.name").toLowerCase
     osName.contains("mac") || osName.contains("windows")
-  }
-
-  def getClassName(clazz: Class[_]): String = {
-    val name = clazz.getName
-    name.substring(0, name.lastIndexOf("$"))
-  }
-
-  private def getSimpleName(clazz: Class[_]): String = {
-    val name = clazz.getSimpleName
-    name.substring(0, name.lastIndexOf("$"))
   }
 
   object CustomMetricSparkPlugin {

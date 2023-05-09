@@ -2,6 +2,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
 export PATH=$JAVA_HOME/bin:$PATH
 mvn clean package -Pdist -Dspark.version=3.1.3 -Djava.version=1.8
 gcloud dataproc jobs submit spark --cluster=bartek-spark-3-1-3-on-dataproc --region=us-central1 --class=com.bawi.spark.MySimplestSparkAppWithMetrics --jars=target/my-apache-spark-dataproc-0.1-SNAPSHOT.jar --properties=spark.metrics.conf.*.sink.slf4j.class=org.apache.spark.metrics.sink.Slf4jSink --labels=job_name=bartek-mysimplestsparkappwithmetrics
+#gcloud dataproc jobs submit spark --cluster=bartek-spark-3-1-3-on-dataproc --region=us-central1 --class=com.bawi.spark.MySimplestSparkAppWithMetrics --jars=gs://${GCP_PROJECT}-bartek-dataproc/my-apache-spark-dataproc-0.1-SNAPSHOT.jar --properties=spark.metrics.conf.*.sink.slf4j.class=org.apache.spark.metrics.sink.Slf4jSink --labels=job_name=bartek-mysimplestsparkappwithmetrics
 
 LABELS_JOB_NAME=bartek-mysimplestsparkappwithmetrics && \
 CLUSTER_NAME=bartek-spark-3-1-3-on-dataproc && \
