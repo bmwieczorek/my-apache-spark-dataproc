@@ -20,16 +20,20 @@ package org.apache.spark.metrics.sink
 import com.codahale.metrics.{MetricRegistry, MyGcpMetricsReporter}
 import org.apache.spark.SecurityManager
 import org.apache.spark.metrics.MetricsSystem
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.concurrent.TimeUnit
 import java.util.{Locale, Properties}
 
-class MyGcpMetricSink(property: Properties, registry: MetricRegistry) extends Sink {
+class MyGcpMetricSink(properties: Properties, registry: MetricRegistry) extends Sink {
+  private val LOGGER: Logger = LoggerFactory.getLogger(getClass)
 
-  def this(property: Properties, registry: MetricRegistry, securityMgr: SecurityManager) = {
-    this(property, registry)
-    System.out.println("Using Legacy Constructor required by MetricsSystem::registerSinks() for spark < 3.2")
+  def this(properties: Properties, registry: MetricRegistry, securityMgr: SecurityManager) = {
+    this(properties, registry)
+    LOGGER.info("Using Legacy Constructor required by MetricsSystem::registerSinks() for spark < 3.2")
   }
+
+  LOGGER.info("Created MyConsoleSink with properties " + properties)
 
   val CONSOLE_DEFAULT_PERIOD = 60
   val CONSOLE_DEFAULT_UNIT = "SECONDS"
@@ -37,12 +41,12 @@ class MyGcpMetricSink(property: Properties, registry: MetricRegistry) extends Si
   val CONSOLE_KEY_PERIOD = "period"
   val CONSOLE_KEY_UNIT = "unit"
 
-  val pollPeriod: Int = Option(property.getProperty(CONSOLE_KEY_PERIOD)) match {
+  val pollPeriod: Int = Option(properties.getProperty(CONSOLE_KEY_PERIOD)) match {
     case Some(s) => s.toInt
     case None => CONSOLE_DEFAULT_PERIOD
   }
 
-  val pollUnit: TimeUnit = Option(property.getProperty(CONSOLE_KEY_UNIT)) match {
+  val pollUnit: TimeUnit = Option(properties.getProperty(CONSOLE_KEY_UNIT)) match {
     case Some(s) => TimeUnit.valueOf(s.toUpperCase(Locale.ROOT))
     case None => TimeUnit.valueOf(CONSOLE_DEFAULT_UNIT)
   }

@@ -1,7 +1,7 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.bawi</groupId>
-    <artifactId>my-apache-spark-dataproc</artifactId>
+    <artifactId>my-apache-spark-metrics-sink</artifactId>
     <version>0.1-SNAPSHOT</version>
 
     <properties>
@@ -10,14 +10,10 @@
         <!-- jar versions matching https://cloud.google.com/dataproc/docs/concepts/versioning/dataproc-release-2.0, image-version 2.0.58-debian10 -->
         <spark.version>3.1.3</spark.version>
         <java.version>1.8</java.version>
-
-        <!-- jar versions matching https://cloud.google.com/dataproc/docs/concepts/versioning/dataproc-release-2.1, image-version 2.0.58-debian10 -->
-<!--        <spark.version>3.3.0</spark.version>-->
-<!--        <java.version>11</java.version>-->
-
         <scala.major.version>2.12</scala.major.version>
         <scala.minor.version>14</scala.minor.version>
 
+        <!-- use gcloud dataproc jobs submit spark: - -properties ^#^spark.jars.packages=org.apache.spark:spark-avro_2.12:3.1.3,com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.29.0#spark.dynamicAllocation.enabled=true ... -->
         <dataproc.provided.dependencies.scope>compile</dataproc.provided.dependencies.scope>
     </properties>
 
@@ -50,19 +46,25 @@
             <version>${spark.version}</version>
             <scope>${dataproc.provided.dependencies.scope}</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.21.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-monitoring</artifactId>
+            <version>1.82.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>1.12.1</version>
+        </dependency>
     </dependencies>
 
     <profiles>
-        <profile>
-            <id>local</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <dataproc.provided.dependencies.scope>compile</dataproc.provided.dependencies.scope>
-            </properties>
-        </profile>
-
         <profile>
             <id>dist</id>
             <properties>
@@ -87,6 +89,24 @@
                                             <exclude>org.scala-lang:*</exclude>
                                         </excludes>
                                     </artifactSet>
+                                    <relocations>
+                                        <relocation>
+                                            <pattern>com.google.protobuf</pattern>
+                                            <shadedPattern>com.bawi.spark.repackaged.com.google.protobuf</shadedPattern>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>com.google.cloud.monitoring</pattern>
+                                            <shadedPattern>com.bawi.spark.repackaged.com.google.cloud.monitoring</shadedPattern>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>com.google.auth</pattern>
+                                            <shadedPattern>com.bawi.spark.repackaged.com.google.auth</shadedPattern>
+                                        </relocation>
+                                    </relocations>
+                                    <transformers>
+                                        <transformer
+                                                implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                    </transformers>
                                 </configuration>
                             </execution>
                         </executions>
@@ -167,4 +187,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

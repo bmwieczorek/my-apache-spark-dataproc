@@ -1,17 +1,19 @@
 package com.bawi.spark
 
-import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
-import org.slf4j.{Logger, LoggerFactory}
 import com.codahale.metrics.Counter
 import org.apache.spark.api.plugin.{DriverPlugin, ExecutorPlugin, PluginContext, SparkPlugin}
-import java.util
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.{SparkConf, SparkContext}
+import org.slf4j.{Logger, LoggerFactory}
 
-object MySimplestSparkAppWithMetrics {
-  private val LOGGER: Logger = LoggerFactory.getLogger(getClass.getName)
+import java.util
+import java.util.Collections
+
+object MySimpleSparkAppWithMetrics {
+  private val LOGGER: Logger = LoggerFactory.getLogger(getClass.getName.split('$')(0))
 
   def main(args: Array[String]): Unit = {
-    val appName = MySimplestSparkAppWithMetrics.getClass.getSimpleName.split('$')(0)
+    val appName = MySimpleSparkAppWithMetrics.getClass.getSimpleName.split('$')(0)
 
     val sparkConf = new SparkConf()
       .setAppName(appName)
@@ -24,21 +26,28 @@ object MySimplestSparkAppWithMetrics {
 
     if (isLocal) {
       sparkConf.setMaster("local[*]")
+    //    sparkConf.set("spark.metrics.conf.*.sink.console.class", "org.apache.spark.metrics.sink.ConsoleSink")
+        sparkConf.set("spark.metrics.conf.*.sink.myconsole.class", "org.apache.spark.metrics.sink.MyConsoleSink")
     }
 
-    //    sparkConf.set("spark.metrics.conf.*.sink.console.class", "org.apache.spark.metrics.sink.ConsoleSink")
-    //    sparkConf.set("spark.metrics.conf.*.sink.myconsole.class", "org.apache.spark.metrics.sink.MyConsoleSink")
-
     val spark = SparkSession.builder().config(sparkConf).getOrCreate()
+    val counterAccum = spark.sparkContext.longAccumulator("counterAccum")
 
     val data = spark.sparkContext.parallelize(1 to 1000)
     val allData = data.map(n => {
-      Thread.sleep(100)
-      CustomMetricSparkPlugin.myCounter.inc(1)
+      Thread.sleep(200)
+      CustomMetricSparkPlugin.executorCounter.inc(1)
+      counterAccum.add(1)
       n
     })
     val cnt = allData.count()
+
+    CustomMetricSparkPlugin.driverCounter.inc(counterAccum.value)
     LOGGER.info(s"Cnt: $cnt")
+
+    // wait to populate driver counter
+    // Thread.sleep(50 * 1000)
+
     spark.stop()
   }
 
@@ -48,16 +57,23 @@ object MySimplestSparkAppWithMetrics {
   }
 
   object CustomMetricSparkPlugin {
-    val myCounter = new Counter
+    val driverCounter = new Counter
+    val executorCounter = new Counter
   }
 
   class CustomMetricSparkPlugin extends SparkPlugin {
-    override def driverPlugin(): DriverPlugin = null
+    override def driverPlugin(): DriverPlugin = new DriverPlugin {
+      override def init(sparkContext: SparkContext, pluginContext: PluginContext): util.Map[String, String] = {
+        val metricRegistry = pluginContext.metricRegistry()
+        metricRegistry.register("driver_counter", CustomMetricSparkPlugin.driverCounter)
+        Collections.emptyMap[String, String]
+      }
+    }
 
     override def executorPlugin(): ExecutorPlugin = new ExecutorPlugin {
       override def init(ctx: PluginContext, extraConf: util.Map[String, String]): Unit = {
         val metricRegistry = ctx.metricRegistry()
-        metricRegistry.register("my_counter", CustomMetricSparkPlugin.myCounter)
+        metricRegistry.register("executor_counter", CustomMetricSparkPlugin.executorCounter)
       }
     }
   }

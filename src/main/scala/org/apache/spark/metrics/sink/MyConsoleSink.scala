@@ -25,14 +25,14 @@ import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import java.util.{Locale, Properties}
 
-class MyConsoleSink(property: Properties, registry: MetricRegistry) extends Sink {
+class MyConsoleSink(properties: Properties, registry: MetricRegistry) extends Sink {
 
-  def this(property: Properties, registry: MetricRegistry, securityMgr: SecurityManager) = {
-    this(property, registry)
+  def this(properties: Properties, registry: MetricRegistry, securityMgr: SecurityManager) = {
+    this(properties, registry)
     System.out.println("Using Legacy Constructor required by MetricsSystem::registerSinks() for spark < 3.2")
   }
 
-  System.out.println("Created MyConsoleSink with " + property)
+  System.out.println("Created MyConsoleSink with " + properties)
   private val hostName = InetAddress.getLocalHost.getHostName
   System.out.println("Created MyConsoleSink on " + hostName)
 
@@ -42,12 +42,12 @@ class MyConsoleSink(property: Properties, registry: MetricRegistry) extends Sink
   val CONSOLE_KEY_PERIOD = "period"
   val CONSOLE_KEY_UNIT = "unit"
 
-  val pollPeriod = Option(property.getProperty(CONSOLE_KEY_PERIOD)) match {
+  val pollPeriod = Option(properties.getProperty(CONSOLE_KEY_PERIOD)) match {
     case Some(s) => s.toInt
     case None => CONSOLE_DEFAULT_PERIOD
   }
 
-  val pollUnit: TimeUnit = Option(property.getProperty(CONSOLE_KEY_UNIT)) match {
+  val pollUnit: TimeUnit = Option(properties.getProperty(CONSOLE_KEY_UNIT)) match {
     case Some(s) => TimeUnit.valueOf(s.toUpperCase(Locale.ROOT))
     case None => TimeUnit.valueOf(CONSOLE_DEFAULT_UNIT)
   }
