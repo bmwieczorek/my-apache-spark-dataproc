@@ -26,8 +26,9 @@ object MySimpleSparkAppWithMetrics {
 
     if (isLocal) {
       sparkConf.setMaster("local[*]")
-    //    sparkConf.set("spark.metrics.conf.*.sink.console.class", "org.apache.spark.metrics.sink.ConsoleSink")
+//        sparkConf.set("spark.metrics.conf.*.sink.console.class", "org.apache.spark.metrics.sink.ConsoleSink")
         sparkConf.set("spark.metrics.conf.*.sink.myconsole.class", "org.apache.spark.metrics.sink.MyConsoleSink")
+        sparkConf.set("spark.metrics.conf.*.sink.mygcpmetric.class", "org.apache.spark.metrics.sink.MyGcpMetricSink")
     }
 
     val spark = SparkSession.builder().config(sparkConf).getOrCreate()
@@ -44,9 +45,6 @@ object MySimpleSparkAppWithMetrics {
 
     CustomMetricSparkPlugin.driverCounter.inc(counterAccum.value)
     LOGGER.info(s"Cnt: $cnt")
-
-    // wait to populate driver counter
-    // Thread.sleep(50 * 1000)
 
     spark.stop()
   }
