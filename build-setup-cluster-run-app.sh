@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CLUSTER=bartek-spark-313s-on-dataproc
-JAR_WITH_VERSION=my-apache-spark-metrics-sink-0.1-SNAPSHOT.jar
+JAR_WITH_VERSION=my-apache-spark-metrics-sink-0.1-SNAPSHOT-shaded.jar
 JAR_WITHOUT_VERSION=my-apache-spark-metrics-sink.jar
 
 gcloud dataproc clusters delete ${CLUSTER} --project ${GCP_PROJECT} --region us-central1 --quiet

@@ -83,6 +83,10 @@
                                     <goal>shade</goal>
                                 </goals>
                                 <configuration>
+                                    <!-- build 2 jars: regular slim (for other projects testing) and fat shaded for dataproc to sesolve conflicts -->
+                                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                                    <shadedClassifierName>shaded</shadedClassifierName>
+
                                     <createDependencyReducedPom>false</createDependencyReducedPom>
                                     <artifactSet>
                                         <excludes>
