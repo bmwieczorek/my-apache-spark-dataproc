@@ -34,7 +34,7 @@ class MyGcpMetricSink(properties: Properties, registry: MetricRegistry) extends 
   }
 
   // need to use System.out.println as Sl4j LOGGER is not working in this class on dataproc cluster
-  System.out.println("Created " + getClass.getSimpleName + " with properties " + properties + " on " + InetAddress.getLocalHost.getHostName)
+  System.out.println("Created MyGcpMetricSink with properties " + properties + " on " + InetAddress.getLocalHost.getHostName)
 
   private val DEFAULT_PERIOD = 60
   private val DEFAULT_UNIT = "SECONDS"
