@@ -20,7 +20,7 @@ public class MyConsoleReporter extends ScheduledReporter {
         private TimeUnit rateUnit;
         private TimeUnit durationUnit;
         private MetricFilter filter;
-        private ScheduledExecutorService executor;
+        private ScheduledExecutorService executorService;
         private boolean shutdownExecutorOnStop;
         private Set<MetricAttribute> disabledMetricAttributes;
 
@@ -33,7 +33,7 @@ public class MyConsoleReporter extends ScheduledReporter {
             this.rateUnit = TimeUnit.SECONDS;
             this.durationUnit = TimeUnit.MILLISECONDS;
             this.filter = MetricFilter.ALL;
-            this.executor = null;
+            this.executorService = null;
             this.shutdownExecutorOnStop = true;
             disabledMetricAttributes = Collections.emptySet();
         }
@@ -43,8 +43,8 @@ public class MyConsoleReporter extends ScheduledReporter {
             return this;
         }
 
-        public Builder scheduleOn(ScheduledExecutorService executor) {
-            this.executor = executor;
+        public Builder executorService(ScheduledExecutorService executorService) {
+            this.executorService = executorService;
             return this;
         }
 
@@ -68,12 +68,12 @@ public class MyConsoleReporter extends ScheduledReporter {
             return this;
         }
 
-        public Builder convertRatesTo(TimeUnit rateUnit) {
+        public Builder rateUnit(TimeUnit rateUnit) {
             this.rateUnit = rateUnit;
             return this;
         }
 
-        public Builder convertDurationsTo(TimeUnit durationUnit) {
+        public Builder durationUnit(TimeUnit durationUnit) {
             this.durationUnit = durationUnit;
             return this;
         }
@@ -97,7 +97,7 @@ public class MyConsoleReporter extends ScheduledReporter {
                     rateUnit,
                     durationUnit,
                     filter,
-                    executor,
+                    executorService,
                     shutdownExecutorOnStop,
                     disabledMetricAttributes);
         }
