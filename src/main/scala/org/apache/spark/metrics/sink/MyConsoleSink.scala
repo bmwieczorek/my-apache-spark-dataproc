@@ -32,9 +32,7 @@ class MyConsoleSink(properties: Properties, registry: MetricRegistry) extends Si
     System.out.println("Using Legacy Constructor required by MetricsSystem::registerSinks() for spark < 3.2")
   }
 
-  System.out.println("Created MyConsoleSink with " + properties)
-  private val hostName = InetAddress.getLocalHost.getHostName
-  System.out.println("Created MyConsoleSink on " + hostName)
+  System.out.println("Created MyConsoleSink with " + properties + " on " + InetAddress.getLocalHost.getHostName)
 
   val CONSOLE_DEFAULT_PERIOD = 10
   val CONSOLE_DEFAULT_UNIT = "SECONDS"
@@ -42,7 +40,7 @@ class MyConsoleSink(properties: Properties, registry: MetricRegistry) extends Si
   val CONSOLE_KEY_PERIOD = "period"
   val CONSOLE_KEY_UNIT = "unit"
 
-  val pollPeriod = Option(properties.getProperty(CONSOLE_KEY_PERIOD)) match {
+  val pollPeriod: Int = Option(properties.getProperty(CONSOLE_KEY_PERIOD)) match {
     case Some(s) => s.toInt
     case None => CONSOLE_DEFAULT_PERIOD
   }
@@ -55,8 +53,8 @@ class MyConsoleSink(properties: Properties, registry: MetricRegistry) extends Si
   MetricsSystem.checkMinimalPollingPeriod(pollUnit, pollPeriod)
 
   val reporter: MyConsoleReporter = MyConsoleReporter.forRegistry(registry)
-    .convertDurationsTo(TimeUnit.MILLISECONDS)
-    .convertRatesTo(TimeUnit.SECONDS)
+    .durationUnit(TimeUnit.MILLISECONDS)
+    .rateUnit(TimeUnit.SECONDS)
     .build()
 
   override def start(): Unit = {
