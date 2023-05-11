@@ -8,7 +8,8 @@ gcloud dataproc clusters delete ${CLUSTER} --project ${GCP_PROJECT} --region us-
 gsutil -m rm -r gs://${GCP_PROJECT}-${CLUSTER}
 gsutil mb -l ${GCP_REGION} gs://${GCP_PROJECT}-${CLUSTER}
 
-export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
+JAVA_HOME=$(/usr/libexec/java_home -v1.8)
+export JAVA_HOME=$JAVA_HOME
 export PATH=$JAVA_HOME/bin:$PATH
 mvn clean package -Pdist -Dspark.version=3.1.3 -Djava.version=1.8
 
