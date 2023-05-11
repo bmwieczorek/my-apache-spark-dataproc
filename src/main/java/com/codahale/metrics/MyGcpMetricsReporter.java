@@ -10,122 +10,25 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class MyGcpMetricsReporter extends ScheduledReporter {
-
-    public static Builder forRegistry(MetricRegistry registry) {
-        return new Builder(registry);
-    }
-
-    public static class Builder {
-        private final MetricRegistry registry;
-        private MetricServiceClient metricServiceClient;
-        private String projectId;
-        private TimeUnit rateUnit;
-        private TimeUnit durationUnit;
-        private MetricFilter filter;
-        private ScheduledExecutorService executor;
-        private boolean shutdownExecutorOnStop;
-        private Set<MetricAttribute> disabledMetricAttributes;
-
-        private Builder(MetricRegistry registry) {
-            this.registry = registry;
-            this.metricServiceClient = getMetricServiceClient();
-            this.projectId = "sab-dev-dap-data-pipeline-3013";
-            this.rateUnit = TimeUnit.SECONDS;
-            this.durationUnit = TimeUnit.MILLISECONDS;
-            this.filter = MetricFilter.ALL;
-            this.executor = null;
-            this.shutdownExecutorOnStop = true;
-            disabledMetricAttributes = Collections.emptySet();
-        }
-
-        private static MetricServiceClient getMetricServiceClient() {
-            try {
-                return MetricServiceClient.create();
-            } catch (IOException e) {
-                System.out.println("Exception creating MetricServiceClient error message " + e.getMessage());
-                System.out.println("Exception creating MetricServiceClient error cause " + getNestedCause(e));
-                System.out.println("Exception creating MetricServiceClient error stacktrace " + getNestedStacktrace(e));
-                throw new RuntimeException(e);
-            }
-        }
-
-        public Builder shutdownExecutorOnStop(boolean shutdownExecutorOnStop) {
-            this.shutdownExecutorOnStop = shutdownExecutorOnStop;
-            return this;
-        }
-
-        public Builder scheduleOn(ScheduledExecutorService executor) {
-            this.executor = executor;
-            return this;
-        }
-
-        public Builder metricServiceClient(MetricServiceClient metricServiceClient) {
-            this.metricServiceClient = metricServiceClient;
-            return this;
-        }
-
-        public Builder projectId(String projectId) {
-            this.projectId = projectId;
-            return this;
-        }
-
-        public Builder convertRatesTo(TimeUnit rateUnit) {
-            this.rateUnit = rateUnit;
-            return this;
-        }
-
-        public Builder convertDurationsTo(TimeUnit durationUnit) {
-            this.durationUnit = durationUnit;
-            return this;
-        }
-
-        public Builder filter(MetricFilter filter) {
-            this.filter = filter;
-            return this;
-        }
-
-        public Builder disabledMetricAttributes(Set<MetricAttribute> disabledMetricAttributes) {
-            this.disabledMetricAttributes = disabledMetricAttributes;
-            return this;
-        }
-
-        public MyGcpMetricsReporter build() {
-            return new MyGcpMetricsReporter(registry,
-                    projectId,
-                    metricServiceClient,
-                    rateUnit,
-                    durationUnit,
-                    filter,
-                    executor,
-                    shutdownExecutorOnStop,
-                    disabledMetricAttributes);
-        }
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(MyGcpMetricsReporter.class);
 
     private final String projectId;
     private final MetricServiceClient metricServiceClient;
 
-    private MyGcpMetricsReporter(MetricRegistry registry,
-                                 String projectId,
-                                 MetricServiceClient metricServiceClient,
-                                 TimeUnit rateUnit,
-                                 TimeUnit durationUnit,
-                                 MetricFilter filter,
-                                 ScheduledExecutorService executor,
-                                 boolean shutdownExecutorOnStop,
-                                 Set<MetricAttribute> disabledMetricAttributes) {
-        super(registry, "gcp-custom-metrics-reporter", filter, rateUnit, durationUnit, executor, shutdownExecutorOnStop, disabledMetricAttributes);
-        this.projectId = projectId;
-        this.metricServiceClient = metricServiceClient;
+    public MyGcpMetricsReporter(MetricRegistry registry) {
+        super(registry, "gcp-custom-metrics-reporter", MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, null, true, Collections.emptySet());
+        this.projectId = System.getenv("GCP_PROJECT") != null ? System.getenv("GCP_PROJECT") : httpGetOrDefault("http://metadata.google.internal/computeMetadata/v1/project/project-id");
+        this.metricServiceClient = getMetricServiceClient();
     }
 
     @Override
@@ -136,9 +39,9 @@ public class MyGcpMetricsReporter extends ScheduledReporter {
                        SortedMap<String, Timer> timers) {
 
         Map<String, String> resourceLabels = new HashMap<>();
-        String instanceId = httpGetOrDefault("http://metadata.google.internal/computeMetadata/v1/instance/id", "000000000000000000");
+        String instanceId =  System.getenv("GCP_PROJECT") != null ? "1234566789123456789" : httpGetOrDefault("http://metadata.google.internal/computeMetadata/v1/instance/id");
         resourceLabels.put("instance_id", instanceId);
-        String instanceZoneWithProject = httpGetOrDefault("http://metadata.google.internal/computeMetadata/v1/instance/zone", "us-central1-b");
+        String instanceZoneWithProject = System.getenv("GCP_PROJECT") != null ? "project/" + System.getenv("GCP_PROJECT") + "/zones/" + System.getenv("GCP_ZONE") : httpGetOrDefault("http://metadata.google.internal/computeMetadata/v1/instance/zone");
         String[] instanceZoneWithProjectSplit = instanceZoneWithProject.split("/");
         String zone = instanceZoneWithProjectSplit[instanceZoneWithProjectSplit.length - 1];
         resourceLabels.put("zone", zone);
@@ -149,35 +52,51 @@ public class MyGcpMetricsReporter extends ScheduledReporter {
                     String key = entry.getKey();
                     long value = entry.getValue().getCount();
                     String metricType = "custom.googleapis.com/spark/" + updateMetricName(key);
-                    System.out.println("Publishing " + metricType + "=" + value);
+                    LOGGER.info(getThreadInfo() + " Publishing " + metricType + "=" + value);
                     String resourceType = "gce_instance";
-
-
                     try {
                         CreateTimeSeriesRequest request = getCreateTimeSeriesRequest(value, projectId, metricType, resourceType, resourceLabels);
                         metricServiceClient.createTimeSeries(request);
                     } catch (Exception e) {
-                        System.out.println("Exception publishing metric error message " + e.getMessage());
-                        System.out.println("Exception publishing metric error cause " + getNestedCause(e));
-                        System.out.println("Exception publishing metric error stacktrace " + getNestedStacktrace(e));
+                        LOGGER.warn(getThreadInfo() + " Exception publishing GCP metric " + metricType + ", message: " + e.getMessage());
+//                        LOGGER.warn(" Exception publishing GCP custom metric, cause: " + getNestedCause(e));
+//                        LOGGER.warn(" Exception publishing GCP custom metric, stacktrace: " + getNestedStacktrace(e));
+//                        LOGGER.warn(" Exception publishing GCP custom metric", e);
                     }
                 }
             }
         }
     }
 
-    private static String httpGetOrDefault(String uri, String defaultValue) {
+    private static String getThreadInfo() {
+        return "[" + Thread.currentThread().getName() + ":" + Thread.currentThread().getId() + "]";
+    }
+
+    private static MetricServiceClient getMetricServiceClient() {
+        try {
+            return MetricServiceClient.create();
+        } catch (IOException e) {
+            LOGGER.error("Exception creating MetricServiceClient, message: " + e.getMessage());
+            LOGGER.error("Exception creating MetricServiceClient, cause: " + getNestedCause(e));
+            LOGGER.error("Exception creating MetricServiceClient, stacktrace: " + getNestedStacktrace(e));
+            LOGGER.error("Exception creating MetricServiceClient", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String httpGetOrDefault(String uri) {
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(uri);
             request.addHeader("Metadata-Flavor", "Google");
             CloseableHttpResponse response = httpclient.execute(request);
             return EntityUtils.toString(response.getEntity());
         } catch (IOException e) {
-            System.out.println("Exception sending http get request for " + uri + " error message " + e.getMessage());
-            System.out.println("Exception sending http get request for " + uri + " error cause " + getNestedCause(e));
-            System.out.println("Exception sending http get request for " + uri + " error stacktrace " + getNestedStacktrace(e));
+            LOGGER.error("Exception sending http get request for " + uri + ", message: " + e.getMessage());
+            LOGGER.error("Exception sending http get request for " + uri + ", cause: " + getNestedCause(e));
+            LOGGER.error("Exception sending http get request for " + uri + ", stacktrace: " + getNestedStacktrace(e));
+            LOGGER.error("Exception sending http get request for " + uri, e);
+            throw new RuntimeException(e);
         }
-        return defaultValue;
     }
 
     private CreateTimeSeriesRequest getCreateTimeSeriesRequest(long value, String projectId, String metricType, String resourceType, Map<String, String> resourceLabels) {
@@ -194,7 +113,7 @@ public class MyGcpMetricsReporter extends ScheduledReporter {
 
         ProjectName name = ProjectName.of(projectId);
 
-// Prepares the metric descriptor
+        // Prepares the metric descriptor
         Map<String, String> metricLabels = new HashMap<>();
         com.google.api.Metric metric =
                 Metric.newBuilder()
